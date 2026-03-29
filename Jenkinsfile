@@ -77,12 +77,10 @@ pipeline {
 
         stage('Validate Terraform') {
             steps {
-                {
                     sh '''
 
                     terraform validate
                     '''
-                }
             }
         }
 
