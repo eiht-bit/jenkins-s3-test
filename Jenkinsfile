@@ -18,6 +18,14 @@ pipeline {
                 }
             }
         }
+
+        // this is the original code block for the block below with github link instead of checkout scm
+        // stage('Checkout Code') {
+        //     steps {
+        //         git branch: 'main', url: 'https://github.com/eiht-bit/jenkins-s3-test.git' 
+        //     }
+        // }
+
         stage('Checkout Code') {
             steps {
                 git branch: 'main', url: 'https://github.com/eiht-bit/jenkins-s3-test.git' 
@@ -67,6 +75,17 @@ pipeline {
             }
         }
 
+        stage('Validate Terraform') {
+            steps {
+                {
+                    sh '''
+
+                    terraform validate
+                    '''
+                }
+            }
+        }
+
         stage('Plan Terraform') {
             steps {
                 withCredentials([[
@@ -91,6 +110,29 @@ pipeline {
 
                     terraform apply -auto-approve tfplan
                     '''
+                }
+            }
+        }
+
+        stage('Optional Destroy') {
+            steps {
+                script {
+                    def destroyChoice = input(
+                        message: 'Do you want to run terraform destroy?',
+                        ok: 'Submit',
+                        parameters: [
+                            choice(
+                                name: 'DESTROY',
+                                choices: ['no', 'yes'],
+                                description: 'Select yes to destroy resources'
+                            )
+                        ]
+                    )
+                    if (destroyChoice == 'yes') {
+                        sh 'terraform destroy -auto-approve'
+                    } else {
+                        echo "Skipping destroy"
+                    }
                 }
             }
         }
